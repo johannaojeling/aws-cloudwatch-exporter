@@ -4,6 +4,11 @@ repos:
     hooks:
       - id: trailing-whitespace
       - id: check-yaml
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.18
+    hooks:
+      - id: terraform-fmt
+      - id: terraform-validate
   - repo: https://github.com/dnephin/pre-commit-golang
     rev: v0.5.1
     hooks:

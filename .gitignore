@@ -1,3 +1,13 @@
+# Terraform
+.terraform/
+terraform.tfstate.d/
+.terraform.lock.hcl
+tfplan
+
+# Lambda
+artifacts/
+response.json
+
 # IDE
 .idea/
 
