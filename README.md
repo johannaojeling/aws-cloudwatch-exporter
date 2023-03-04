@@ -1,7 +1,8 @@
 # AWS CloudWatch Exporter
 
 This project contains an AWS Lambda function for exporting CloudWatch logs to S3. It includes Go source code for the
-function and Terraform code for setting up the S3 bucket, IAM role and Lambda function.
+function and Terraform code for setting up the S3 bucket, IAM role, Lambda function and EventBridge trigger. The
+function is scheduled to run on a daily basis and writes the logs to `s3://{bucket}/{log_group}/{%Y-%m-%d}/`.
 
 ## Prerequisites
 
@@ -9,7 +10,7 @@ function and Terraform code for setting up the S3 bucket, IAM role and Lambda fu
 - AWS CLI v2
 - Terraform v1.3.7+
 
-## Deploy function
+## Deployment
 
 ### Build Go binary
 
@@ -19,7 +20,7 @@ OUT_PATH="terraform/cloudwatch-exporter/resources/artifacts/main"
 GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o ${OUT_PATH}
 ```
 
-### Build infrastructure
+### Deploy infrastructure
 
 The following variables need to be set, see [.envrc.sample](.envrc.sample) for example:
 
@@ -37,25 +38,4 @@ cd terraform
 terraform init
 terraform plan -out tfplan
 terraform apply tfplan
-```
-
-## Invoke function
-
-Invoke the Lambda function with log group name, destination prefix, and from and to timestamps
-
-```bash
-FUNCTION_NAME=$(cd terraform && terraform output -raw function_name)
-
-PAYLOAD='{
-  "log_group": "my-log-group",
-  "prefix": "my-log-group/2023-02-04",
-  "from": 1675468800000,
-  "to": 1675555200000
-}'
-
-aws lambda invoke \
---function-name=${FUNCTION_NAME} \
---payload=${PAYLOAD} \
---cli-binary-format=raw-in-base64-out \
-response.json
 ```

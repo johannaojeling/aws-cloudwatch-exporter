@@ -3,17 +3,27 @@ variable "region" {
   description = "AWS default region"
 }
 
-variable "bucket_name" {
+variable "bucket" {
   type        = string
-  description = "Name of S3 bucket to export CloudWatch logs"
+  description = "Name of S3 bucket to export CloudWatch logs to"
 }
 
-variable "function_name" {
+variable "log_group" {
+  type        = string
+  description = "Name of CloudWatch log group to export"
+}
+
+variable "function" {
   type        = string
   description = "Name of Lambda function to trigger CloudWatch export task"
 }
 
-variable "role_name" {
+variable "role" {
   type        = string
   description = "Name of Lambda executor role"
+}
+
+variable "event_rule" {
+  type        = string
+  description = "Name of EventBridge rule to trigger Lambda function"
 }

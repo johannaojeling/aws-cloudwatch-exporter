@@ -6,7 +6,7 @@ locals {
 }
 
 resource "aws_iam_role" "lambda_role" {
-  name               = "${var.role_name}-${terraform.workspace}"
+  name               = "${var.role}-${terraform.workspace}"
   assume_role_policy = file("${path.module}/resources/policies/lambda-policy.json")
 }
 

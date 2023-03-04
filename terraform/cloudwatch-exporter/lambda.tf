@@ -5,7 +5,7 @@ data "archive_file" "go_binary" {
 }
 
 resource "aws_lambda_function" "cloudwatch_exporter" {
-  function_name = "${var.function_name}-${terraform.workspace}"
+  function_name = "${var.function}-${terraform.workspace}"
 
   role             = aws_iam_role.lambda_role.arn
   filename         = data.archive_file.go_binary.output_path
@@ -15,7 +15,8 @@ resource "aws_lambda_function" "cloudwatch_exporter" {
 
   environment {
     variables = {
-      "BUCKET" = aws_s3_bucket.bucket.id
+      "BUCKET"    = aws_s3_bucket.bucket.id,
+      "LOG_GROUP" = var.log_group
     }
   }
 }

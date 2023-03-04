@@ -3,16 +3,25 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
+	"strings"
+	"time"
 
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
+	"golang.org/x/exp/slog"
+)
+
+const (
+	duration   = 24 * time.Hour
+	timeFormat = "2006-01-02"
 )
 
 var (
-	bucket = os.Getenv("BUCKET")
+	bucket   = os.Getenv("BUCKET")
+	logGroup = os.Getenv("LOG_GROUP")
 
 	client *cloudwatchlogs.Client
 )
@@ -20,42 +29,47 @@ var (
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.Background())
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		slog.Error("Failed to load config", err)
+		os.Exit(1)
 	}
 
 	client = cloudwatchlogs.NewFromConfig(cfg)
 }
 
 func main() {
-	lambda.Start(createExportTask)
+	lambda.Start(triggerExport)
 }
 
-type createExportRequest struct {
-	LogGroup string `json:"log_group"`
-	Prefix   string `json:"prefix"`
-	From     int64  `json:"from"`
-	To       int64  `json:"to"`
-}
+func triggerExport(ctx context.Context, event events.CloudWatchEvent) error {
+	endTime := event.Time.Truncate(duration)
+	startTime := endTime.Add(-duration)
 
-type createExportResponse struct {
-	TaskID string `json:"task_id"`
-}
+	prefix := fmt.Sprintf("%s/%s", strings.TrimLeft(logGroup, "/"), startTime.Format(timeFormat))
+	from := startTime.UnixMilli()
+	to := endTime.UnixMilli()
 
-func createExportTask(ctx context.Context, req createExportRequest) (createExportResponse, error) {
 	input := &cloudwatchlogs.CreateExportTaskInput{
-		LogGroupName:      &req.LogGroup,
+		LogGroupName:      &logGroup,
 		Destination:       &bucket,
-		DestinationPrefix: &req.Prefix,
-		From:              &req.From,
-		To:                &req.To,
+		DestinationPrefix: &prefix,
+		From:              &from,
+		To:                &to,
 	}
+
+	slog.Info(
+		"Creating export task",
+		slog.String("log_group_name", logGroup),
+		slog.String("destination", bucket),
+		slog.String("destination_prefix", prefix),
+		slog.Int64("from", from),
+		slog.Int64("to", to),
+	)
 
 	output, err := client.CreateExportTask(ctx, input)
 	if err != nil {
-		return createExportResponse{}, fmt.Errorf("error creating export task: %v", err)
+		return fmt.Errorf("error creating export task: %v", err)
 	}
 
-	return createExportResponse{
-		TaskID: *output.TaskId,
-	}, nil
+	slog.Info("Created export task", slog.String("task_id", *output.TaskId))
+	return nil
 }

@@ -1,11 +1,19 @@
-variable "bucket_name" {
+variable "bucket" {
   type = string
 }
 
-variable "function_name" {
+variable "log_group" {
   type = string
 }
 
-variable "role_name" {
+variable "function" {
+  type = string
+}
+
+variable "role" {
+  type = string
+}
+
+variable "event_rule" {
   type = string
 }

@@ -19,7 +19,9 @@ provider "aws" {
 module "cloudwatch-exporter" {
   source = "./cloudwatch-exporter"
 
-  bucket_name   = var.bucket_name
-  function_name = var.function_name
-  role_name     = var.role_name
+  bucket     = var.bucket
+  log_group  = var.log_group
+  function   = var.function
+  role       = var.role
+  event_rule = var.event_rule
 }
